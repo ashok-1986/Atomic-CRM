@@ -1,8 +1,6 @@
-name: 🚀 Deploy
+name: 🚀 Deploy (disabled - use deploy-hostinger.yml instead)
 on:
-    push:
-        branches:
-            - main
+    workflow_dispatch: # Disabled auto-trigger, kept for manual use only
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
