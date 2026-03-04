@@ -8,6 +8,7 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { ImportPage } from "../misc/ImportPage";
+import { AiAssistantPanel } from "../ai/AiAssistantPanel";
 
 const Header = () => {
   const { darkModeLogo, lightModeLogo, title } = useConfigurationContext();
@@ -75,6 +76,7 @@ const Header = () => {
               <div className="flex items-center">
                 <ThemeModeToggle />
                 <RefreshButton />
+                <AiAssistantPanel />
                 <UserMenu>
                   <ProfileMenu />
                   <CanAccess resource="sales" action="list">
@@ -105,11 +107,10 @@ const NavigationTab = ({
 }) => (
   <Link
     to={to}
-    className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
-      isActive
+    className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${isActive
         ? "text-secondary-foreground border-secondary-foreground"
         : "text-secondary-foreground/70 border-transparent hover:text-secondary-foreground/80"
-    }`}
+      }`}
   >
     {label}
   </Link>
