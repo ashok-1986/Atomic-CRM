@@ -13,6 +13,7 @@ import { AsideSection } from "../misc/AsideSection";
 import type { Contact } from "../types";
 import { ContactMergeButton } from "./ContactMergeButton";
 import { ExportVCardButton } from "./ExportVCardButton";
+import { ContactInsightsButton } from "../ai/ContactInsightsButton";
 
 export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
   const record = useRecordContext<Contact>();
@@ -20,12 +21,13 @@ export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
   if (!record) return null;
   return (
     <div className="hidden sm:block w-92 min-w-92 text-sm">
-      <div className="mb-4 -ml-1">
+      <div className="mb-4 -ml-1 flex items-center gap-2">
         {link === "edit" ? (
           <EditButton label="Edit Contact" />
         ) : (
           <ShowButton label="Show Contact" />
         )}
+        <ContactInsightsButton />
       </div>
 
       <AsideSection title="Personal info">
