@@ -42,9 +42,12 @@ jobs:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
           local-dir: ./dist/
-          server-dir: ./public_html/
+          server-dir: ${{ secrets.FTP_SERVER_DIR || './public_html/' }}
           dangerous-clean-slate: false
+          log-level: verbose
 
   deploy-supabase:
     name: 🗄️ Deploy Supabase
@@ -76,7 +79,8 @@ jobs:
         run: npx supabase link --project-ref $SUPABASE_PROJECT_ID
 
       - name: 📡 Push database migrations
-        run: npx supabase db push
+        run: npx supabase db push --include-all
 
       - name: 📡 Deploy edge functions
         run: npx supabase functions deploy
+        continue-on-error: true
