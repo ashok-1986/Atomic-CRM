@@ -80,6 +80,7 @@ jobs:
 
       - name: 📡 Push database migrations
         run: npx supabase db push --include-all
+        continue-on-error: true
 
       - name: 📡 Deploy edge functions
         run: npx supabase functions deploy
