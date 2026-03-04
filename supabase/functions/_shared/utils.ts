@@ -10,3 +10,14 @@ export function createErrorResponse(
     status,
   });
 }
+
+export function createJsonResponse(
+  body: unknown,
+  status = 200,
+) {
+  return new Response(JSON.stringify(body), {
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+    status,
+  });
+}
+

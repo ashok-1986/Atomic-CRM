@@ -1,6 +1,6 @@
 import { RotateCcw, Save } from "lucide-react";
 import type { RaRecord } from "ra-core";
-import { EditBase, Form, useGetList, useInput, useNotify } from "ra-core";
+import { EditBase, Form, useGetList, useInput, useNotify, usePermissions } from "ra-core";
 import { useCallback, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { SimpleFormIterator } from "@/components/admin/simple-form-iterator";
 import { TextInput } from "@/components/admin/text-input";
 
 import ImageEditorField from "../misc/ImageEditorField";
+import { ApiKeysSection } from "./ApiKeysSection";
 import {
   useConfigurationContext,
   useConfigurationUpdater,
@@ -25,6 +26,7 @@ const SECTIONS = [
   { id: "deals", label: "Deals" },
   { id: "notes", label: "Notes" },
   { id: "tasks", label: "Tasks" },
+  { id: "api-keys", label: "API Keys", adminOnly: true },
 ];
 
 /** Ensure every item in a { value, label } array has a value (slug from label). */
@@ -146,6 +148,8 @@ const SettingsFormFields = () => {
     reset,
     formState: { isSubmitting },
   } = useFormContext();
+  const { permissions } = usePermissions();
+  const isAdmin = permissions === "admin";
 
   const dealStages = watch("dealStages");
   const dealPipelineStatuses: string[] = watch("dealPipelineStatuses") ?? [];
@@ -172,7 +176,7 @@ const SettingsFormFields = () => {
       <nav className="hidden md:block w-48 shrink-0">
         <div className="sticky top-4 space-y-1">
           <h1 className="text-2xl font-semibold px-3 mb-2">Settings</h1>
-          {SECTIONS.map((section) => (
+          {SECTIONS.filter((s) => !s.adminOnly || isAdmin).map((section) => (
             <button
               key={section.id}
               type="button"
@@ -356,6 +360,9 @@ const SettingsFormFields = () => {
             </ArrayInput>
           </CardContent>
         </Card>
+
+        {/* API Keys (admin only) */}
+        {isAdmin && <ApiKeysSection />}
       </div>
 
       {/* Sticky save button */}
