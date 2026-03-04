@@ -27,6 +27,7 @@ import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Deal } from "../types";
 import { ContactList } from "./ContactList";
 import { findDealLabel } from "./deal";
+import { DealInsightsButton } from "../ai/DealInsightsButton";
 
 export const DealShow = ({ open, id }: { open: boolean; id?: string }) => {
   const redirect = useRedirect();
@@ -76,6 +77,7 @@ const DealShowContent = () => {
                 </>
               ) : (
                 <>
+                  <DealInsightsButton />
                   <ArchiveButton record={record} />
                   <EditButton />
                 </>

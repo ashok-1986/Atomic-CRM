@@ -154,6 +154,87 @@ Provide:
     return callGemini(prompt, []);
 }
 
+// ─── Contact Email Draft ──────────────────────────────────────────────
+
+async function getContactEmailDraft(contactId: number) {
+    const { data: contact } = await supabaseAdmin
+        .from("contacts")
+        .select("*")
+        .eq("id", contactId)
+        .single();
+
+    if (!contact) throw new Error("Contact not found");
+
+    const [notes, tasks, company] = await Promise.all([
+        supabaseAdmin.from("contact_notes").select("*").eq("contact_id", contactId).order("date", { ascending: false }).limit(5),
+        supabaseAdmin.from("tasks").select("*").eq("contact_id", contactId).order("due_date", { ascending: false }).limit(5),
+        contact.company_id
+            ? supabaseAdmin.from("companies").select("*").eq("id", contact.company_id).single()
+            : Promise.resolve({ data: null }),
+    ]);
+
+    const prompt = `You are a top-performing B2B sales representative drafting an email to a contact.
+
+CONTACT: 
+Name: ${contact.first_name} ${contact.last_name}
+Title: ${contact.title}
+Status: ${contact.status}
+Background: ${contact.background}
+COMPANY: ${company.data?.name || 'Unknown'} (${company.data?.sector || 'Unknown sector'})
+RECENT NOTES (interactions): ${JSON.stringify(notes.data, null, 2)}
+PENDING TASKS: ${JSON.stringify(tasks.data, null, 2)}
+
+Task:
+Write a highly personalized, professional, and concise email to this person.
+- If there are recent notes, base the email on the latest interaction (e.g., follow-up on a call).
+- If there are no recent notes and status is cold, write a polite introduction/prospecting email.
+- Keep the tone approachable but professional.
+- Provide a clear subject line and the main body of the email.
+- DO NOT INCLUDE markdown wrappers like \`\`\`email, just raw text with Subject: and empty lines.`;
+
+    return callGemini(prompt, []);
+}
+
+// ─── Deal Insights ───────────────────────────────────────────────────
+
+async function getDealInsights(dealId: number) {
+    const { data: deal } = await supabaseAdmin
+        .from("deals")
+        .select("*")
+        .eq("id", dealId)
+        .single();
+
+    if (!deal) throw new Error("Deal not found");
+
+    const [notes, tasks, company, contact] = await Promise.all([
+        supabaseAdmin.from("deal_notes").select("*").eq("deal_id", dealId).order("date", { ascending: false }).limit(10),
+        supabaseAdmin.from("tasks").select("*").eq("deal_id", dealId).order("due_date", { ascending: false }).limit(10),
+        deal.company_id
+            ? supabaseAdmin.from("companies").select("*").eq("id", deal.company_id).single()
+            : Promise.resolve({ data: null }),
+        deal.contact_id
+            ? supabaseAdmin.from("contacts").select("*").eq("id", deal.contact_id).single()
+            : Promise.resolve({ data: null }),
+    ]);
+
+    const prompt = `Analyze this CRM deal pipeline opportunity and provide actionable insights:
+
+DEAL: ${JSON.stringify(deal, null, 2)}
+COMPANY: ${JSON.stringify(company.data, null, 2)}
+CONTACT: ${JSON.stringify(contact.data, null, 2)}
+RECENT NOTES: ${JSON.stringify(notes.data, null, 2)}
+TASKS: ${JSON.stringify(tasks.data, null, 2)}
+
+Provide:
+1. **Pipeline Summary** - Brief overview of this opportunity
+2. **Win Probability** - Estimate probability (Low, Medium, High) based on history, tasks, and deal stage. State *why*.
+3. **Suggested Next Actions** - What specifically should the sales rep do next to close this deal?
+4. **Risk Factors** - Any concerns (e.g., lack of recent notes, neglected tasks, stalling in stage)
+5. **Pitch Angle** - Recommended angle for the next interaction given company/contact info`;
+
+    return callGemini(prompt, []);
+}
+
 // ─── Main Handler ─────────────────────────────────────────────────────
 
 Deno.serve(async (req: Request) =>
@@ -194,7 +275,31 @@ Deno.serve(async (req: Request) =>
                     }
                 }
 
-                return createErrorResponse(404, "Not found. Available: POST /ai/chat, POST /ai/insights/contact/:id");
+                // POST /ai/insights/deal/:id - Deal insights
+                if (req.method === "POST" && path.startsWith("insights/deal/")) {
+                    try {
+                        const dealId = parseInt(path.split("/").pop()!, 10);
+                        const insights = await getDealInsights(dealId);
+                        return createJsonResponse({ insights });
+                    } catch (err: any) {
+                        console.error("AI deal insights error:", err);
+                        return createErrorResponse(500, err.message || "AI service error");
+                    }
+                }
+
+                // POST /ai/draft-email/contact/:id - Email drafting
+                if (req.method === "POST" && path.startsWith("draft-email/contact/")) {
+                    try {
+                        const contactId = parseInt(path.split("/").pop()!, 10);
+                        const draft = await getContactEmailDraft(contactId);
+                        return createJsonResponse({ draft });
+                    } catch (err: any) {
+                        console.error("AI email draft error:", err);
+                        return createErrorResponse(500, err.message || "AI service error");
+                    }
+                }
+
+                return createErrorResponse(404, "Not found. Available: POST /ai/chat, POST /ai/insights/contact/:id, POST /ai/insights/deal/:id, POST /ai/draft-email/contact/:id");
             })
         )
     )

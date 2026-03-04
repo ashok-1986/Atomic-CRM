@@ -14,6 +14,7 @@ import type { Contact } from "../types";
 import { ContactMergeButton } from "./ContactMergeButton";
 import { ExportVCardButton } from "./ExportVCardButton";
 import { ContactInsightsButton } from "../ai/ContactInsightsButton";
+import { ContactEmailDraftButton } from "../ai/ContactEmailDraftButton";
 
 export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
   const record = useRecordContext<Contact>();
@@ -27,7 +28,10 @@ export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
         ) : (
           <ShowButton label="Show Contact" />
         )}
-        <ContactInsightsButton />
+        <div className="flex gap-1.5 ml-auto">
+          <ContactInsightsButton />
+          <ContactEmailDraftButton />
+        </div>
       </div>
 
       <AsideSection title="Personal info">
